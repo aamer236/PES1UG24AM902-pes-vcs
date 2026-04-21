@@ -194,8 +194,40 @@ int head_update(const ObjectID *new_commit) {
 //
 // Returns 0 on success, -1 on error.
 int commit_create(const char *message, ObjectID *commit_id_out) {
-    // TODO: Implement commit creation
-    // (See Lab Appendix for logical steps)
-    (void)message; (void)commit_id_out;
-    return -1;
+    Commit commit;
+    memset(&commit, 0, sizeof(Commit));
+
+    if (tree_from_index(&commit.tree) != 0) {
+        printf("DEBUG: tree_from_index failed\n"); // Add this
+        return -1;
+    }
+
+    if (head_read(&commit.parent) == 0) {
+        commit.has_parent = 1;
+    } 
+
+    snprintf(commit.author, sizeof(commit.author), "%s", pes_author());
+    commit.timestamp = (uint64_t)time(NULL);
+    snprintf(commit.message, sizeof(commit.message), "%s", message);
+
+    void *data = NULL;
+    size_t len = 0;
+    if (commit_serialize(&commit, &data, &len) != 0) {
+        printf("DEBUG: commit_serialize failed\n"); // Add this
+        return -1;
+    }
+
+    if (object_write(OBJ_COMMIT, data, len, commit_id_out) != 0) {
+        printf("DEBUG: object_write failed\n"); // Add this
+        free(data);
+        return -1;
+    }
+    free(data);
+
+    if (head_update(commit_id_out) != 0) {
+        printf("DEBUG: head_update failed\n"); // Add this
+        return -1;
+    }
+
+    return 0;
 }
