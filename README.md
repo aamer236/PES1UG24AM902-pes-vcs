@@ -414,6 +414,7 @@ The test program verifies:
 
 
 **📸 Screenshot 2B:** Pick a tree object from `find .pes/objects -type f` and run `xxd .pes/objects/XX/YYY... | head -20` to show the raw binary format.
+<img width="1211" height="194" alt="image" src="https://github.com/user-attachments/assets/af94d603-798a-4b8e-8af9-4b1f7ec1f58e" />
 
 ---
 
