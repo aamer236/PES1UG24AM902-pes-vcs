@@ -471,8 +471,10 @@ cat .pes/index    # Human-readable text format
 ```
 
 **📸 Screenshot 3A:** Run `./pes init`, `./pes add file1.txt file2.txt`, `./pes status` — show the output.
+<img width="950" height="405" alt="image" src="https://github.com/user-attachments/assets/a6c1602f-5d08-4cd9-9ca2-3336988d5aea" />
 
 **📸 Screenshot 3B:** `cat .pes/index` showing the text-format index with your entries.
+<img width="1095" height="80" alt="image" src="https://github.com/user-attachments/assets/546004c6-fbf0-45bc-babf-154d72b5052e" />
 
 ---
 
