@@ -524,10 +524,14 @@ make test-integration
 ```
 
 **📸 Screenshot 4A:** Output of `./pes log` showing three commits with hashes, authors, timestamps, and messages.
+<img width="957" height="407" alt="image" src="https://github.com/user-attachments/assets/b6a82c69-f52e-49dc-b7d6-34fe32c9e39c" />
 
 **📸 Screenshot 4B:** `find .pes -type f | sort` showing object store growth after three commits.
+<img width="1059" height="283" alt="image" src="https://github.com/user-attachments/assets/b53f11d8-45b0-4fa2-85d8-2f735d82c603" />
+
 
 **📸 Screenshot 4C:** `cat .pes/refs/heads/main` and `cat .pes/HEAD` showing the reference chain.
+<img width="1055" height="130" alt="image" src="https://github.com/user-attachments/assets/d46970d1-d84b-4fb1-918d-756ea6c93021" />
 
 ---
 
