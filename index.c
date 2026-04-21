@@ -23,6 +23,39 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
+#include "pes.h"
+#include "index.h"
+
+#include <sys/stat.h>
+
+int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out);
+uint32_t get_file_mode(const char *path);
+
+int read_file(const char *path, void **data_out, size_t *size_out) {
+    FILE *f = fopen(path, "rb");
+    if (!f) return -1;
+
+    fseek(f, 0, SEEK_END);
+    size_t size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    void *data = malloc(size);
+    if (!data) {
+        fclose(f);
+        return -1;
+    }
+
+    if (fread(data, 1, size, f) != size) {
+        free(data);
+        fclose(f);
+        return -1;
+    }
+
+    fclose(f);
+    *data_out = data;
+    *size_out = size;
+    return 0;
+}
 
 // ─── PROVIDED ────────────────────────────────────────────────────────────────
 
@@ -134,11 +167,25 @@ int index_status(const Index *index) {
 //   - hex_to_hash                      : converting the parsed string to ObjectID
 //
 // Returns 0 on success, -1 on error.
-int index_load(Index *index) {
-    // TODO: Implement index loading
-    // (See Lab Appendix for logical steps)
-    (void)index;
-    return -1;
+int index_load(Index *index_out) {
+    index_out->count = 0;
+    FILE *f = fopen(INDEX_FILE, "r"); // Using constant from pes.h
+    if (!f) return 0; // Empty index is fine
+
+    char line[1024];
+    while (fgets(line, sizeof(line), f) && index_out->count < MAX_INDEX_ENTRIES) {
+        IndexEntry *entry = &index_out->entries[index_out->count];
+        char hash_hex[HASH_HEX_SIZE + 1];
+
+        // Format: <mode-octal> <hash-hex> <path>
+        if (sscanf(line, "%o %64s %511s", &entry->mode, hash_hex, entry->path) == 3) {
+            hex_to_hash(hash_hex, &entry->hash);
+            index_out->count++;
+        }
+    }
+
+    fclose(f);
+    return 0;
 }
 
 // Save the index to .pes/index atomically.
@@ -152,12 +199,21 @@ int index_load(Index *index) {
 //
 // Returns 0 on success, -1 on error.
 int index_save(const Index *index) {
-    // TODO: Implement atomic index saving
-    // (See Lab Appendix for logical steps)
-    (void)index;
-    return -1;
-}
+    FILE *f = fopen(INDEX_FILE, "w");
+    if (!f) return -1;
 
+    for (int i = 0; i < index->count; i++) {
+        const IndexEntry *e = &index->entries[i];
+        char hex[HASH_HEX_SIZE + 1];
+        hash_to_hex(&e->hash, hex);
+
+        // Standard format: <mode> <hash> <path>
+        fprintf(f, "%o %s %s\n", e->mode, hex, e->path);
+    }
+
+    fclose(f);
+    return 0;
+}
 // Stage a file for the next commit.
 //
 // HINTS - Useful functions and syscalls:
@@ -168,8 +224,34 @@ int index_save(const Index *index) {
 //
 // Returns 0 on success, -1 on error.
 int index_add(Index *index, const char *path) {
-    // TODO: Implement file staging
-    // (See Lab Appendix for logical steps)
-    (void)index; (void)path;
-    return -1;
+    // 1. Load existing staged files into the 'index' struct
+    index_load(index);
+
+    void *data;
+    size_t size;
+    // 2. Use that read_file helper we fixed earlier
+    if (read_file(path, &data, &size) != 0) return -1;
+
+    // 3. Write the blob and get its hash
+    ObjectID hash;
+    if (object_write(OBJ_BLOB, data, size, &hash) != 0) {
+        free(data);
+        return -1;
+    }
+    free(data);
+
+    // 4. Check if the file is already staged
+    IndexEntry *entry = index_find(index, path);
+    if (!entry) {
+        if (index->count >= MAX_INDEX_ENTRIES) return -1;
+        entry = &index->entries[index->count++];
+        strncpy(entry->path, path, sizeof(entry->path));
+    }
+
+    // 5. Set the metadata
+    entry->mode = get_file_mode(path);
+    memcpy(entry->hash.hash, hash.hash, HASH_SIZE);
+
+    // 6. CRITICAL: Save the struct back to the .pes/index file
+    return index_save(index);
 }
