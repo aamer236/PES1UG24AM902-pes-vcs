@@ -410,6 +410,8 @@ The test program verifies:
 - Deterministic serialization (same entries in any order → identical output)
 
 **📸 Screenshot 2A:** Output of `./test_tree` showing all tests passing.
+<img width="993" height="163" alt="image" src="https://github.com/user-attachments/assets/98ca591f-c898-41ca-b7e3-d68070e85ae8" />
+
 
 **📸 Screenshot 2B:** Pick a tree object from `find .pes/objects -type f` and run `xxd .pes/objects/XX/YYY... | head -20` to show the raw binary format.
 
